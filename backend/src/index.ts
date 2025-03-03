@@ -1,14 +1,14 @@
-import { FA5Style } from "@expo/vector-icons/build/FontAwesome5";
-import { RpcRequest } from "@livekit/protocol";
 import express from "express";
 import { AccessToken } from "livekit-server-sdk";
+import * as dotenv from "dotenv";
 
 const app = express();
 app.use(express.json());
+dotenv.config();
 
-const API_KEY = "";
-const API_SECRET = "";
-const SERVER_URL = "";
+const API_KEY = process.env.LIVEKIT_API_KEY;
+const API_SECRET = process.env.LIVEKIT_API_SECRET;
+const SERVER_URL = process.env.LIVEKIT_URL;
 
 app.post("/create-meeting", (req, res) => {
   const { teacherId, room } = req.body;
@@ -36,5 +36,4 @@ app.post("/join-meeting", (req, res) => {
   res.json({ token: token.toJwt(), room, serverUrl: SERVER_URL });
 });
 
-
-app.listen(8000 , () => console.log("Server started at 8000"))
+app.listen(8000, () => console.log("Server started at 8000"));
