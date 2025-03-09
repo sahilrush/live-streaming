@@ -32,39 +32,94 @@ var __importStar = (this && this.__importStar) || (function () {
         return result;
     };
 })();
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
-const livekit_server_sdk_1 = require("livekit-server-sdk");
 const dotenv = __importStar(require("dotenv"));
+const livekit_server_sdk_1 = require("livekit-server-sdk");
+const cors_1 = __importDefault(require("cors"));
+dotenv.config();
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
-dotenv.config();
+app.use((0, cors_1.default)());
 const API_KEY = process.env.LIVEKIT_API_KEY;
 const API_SECRET = process.env.LIVEKIT_API_SECRET;
 const SERVER_URL = process.env.LIVEKIT_URL;
-app.post("/create-meeting", (req, res) => {
+if (!SERVER_URL) {
+    console.error("Server URL is missing");
+}
+console.log("Server URL configured:", SERVER_URL);
+console.log("API credentials loaded:", API_KEY ? "Yes" : "No", API_SECRET ? "Yes" : "No");
+app.post("/create-meeting", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    console.log("hitting the postman");
     const { teacherId, room } = req.body;
-    const token = new livekit_server_sdk_1.AccessToken(API_KEY, API_SECRET, { identity: teacherId });
-    token.addGrant({
-        roomJoin: true,
-        room,
-        canPublish: true,
-        canSubscribe: true,
-    });
-    res.json({ token: token.toJwt(), room, serverUrl: SERVER_URL });
-});
-app.post("/join-meeting", (req, res) => {
+    if (!API_KEY || !API_SECRET) {
+        res.status(500).json({ error: "LiveKit API credentials are missing" });
+        return;
+    }
+    if (!teacherId || !room) {
+        res.status(400).json({ error: "teacherId and room are required" });
+        return;
+    }
+    try {
+        const token = new livekit_server_sdk_1.AccessToken(API_KEY, API_SECRET, {
+            identity: teacherId,
+        });
+        token.addGrant({
+            roomJoin: true,
+            room,
+            canPublish: true,
+            canSubscribe: true,
+        });
+        const jwtToken = yield token.toJwt();
+        console.log("Generated JWT:", jwtToken);
+        console.log(`Token generated successfully for teacher: ${teacherId} in room: ${room}`);
+        res.status(200).json({ token: jwtToken, room, serverUrl: SERVER_URL });
+    }
+    catch (err) {
+        console.error("Token Generation Error:", err);
+        res.status(500).json({ error: "Failed to generate token" });
+    }
+}));
+app.post("/join- ", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { studentId, room } = req.body;
-    const token = new livekit_server_sdk_1.AccessToken(API_KEY, API_SECRET, { identity: studentId });
-    token.addGrant({
-        roomJoin: true,
-        room,
-        canPublish: false,
-        canSubscribe: true,
-    });
-    res.json({ token: token.toJwt(), room, serverUrl: SERVER_URL });
-});
-app.listen(8000, () => console.log("Server started at 8000"));
+    if (!API_KEY || !API_SECRET) {
+        res.status(500).json({ error: "LiveKit API credentials are missing" });
+        return;
+    }
+    console.log(API_KEY, API_SECRET);
+    if (!studentId || !room) {
+        res.status(400).json({ error: "studentId and room are required" });
+        return;
+    }
+    try {
+        const token = new livekit_server_sdk_1.AccessToken(API_KEY, API_SECRET, {
+            identity: studentId,
+        });
+        token.addGrant({
+            roomJoin: true,
+            room,
+            canPublish: false,
+            canSubscribe: true,
+        });
+        const jwtToken = yield token.toJwt();
+        console.log(`Token generated successfully for student: ${studentId} in room: ${room}`);
+        res.status(200).json({ token: jwtToken, room, serverUrl: SERVER_URL });
+    }
+    catch (err) {
+        console.error("Token Generation Error:", err);
+        res.status(500).json({ error: "Failed to generate token" });
+    }
+}));
+app.listen(8000, () => console.log("Server started at port 8000"));
