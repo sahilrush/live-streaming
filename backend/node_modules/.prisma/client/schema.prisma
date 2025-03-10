@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  name           String
+  email          String   @unique
+  password       String
+  role           Role     @default(STUDENT)
+  profilePicture String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  teacherSessions Session[]            @relation("TeacherSessions")
+  studentSessions SessionParticipant[]
+}
+
+model Session {
+  id          String        @id @default(uuid())
+  title       String
+  description String?
+  status      SessionStatus @default(SCHEDULED)
+  startTime   DateTime?
+  endTime     DateTime?
+  livekitRoom String?       @unique // LiveKit room name
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  // Relations
+  teacher      User                 @relation("TeacherSessions", fields: [teacherId], references: [id])
+  teacherId    String
+  participants SessionParticipant[]
+}
+
+model SessionParticipant {
+  id       String   @id @default(uuid())
+  joinedAt DateTime @default(now())
+
+  // Relations
+  student   User    @relation(fields: [studentId], references: [id])
+  studentId String
+  session   Session @relation(fields: [sessionId], references: [id])
+  sessionId String
+
+  @@unique([studentId, sessionId])
+}
+
+enum Role {
+  STUDENT
+  TEACHER
+}
+
+enum SessionStatus {
+  SCHEDULED
+  LIVE
+  COMPLETED
+  CANCELLED
+}
