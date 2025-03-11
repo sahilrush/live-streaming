@@ -14,10 +14,12 @@
         "@prisma/client": "^6.4.1",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
+        "helmet": "^8.0.0",
         "livekit-server-sdk": "^2.10.2"
     },
     "devDependencies": {
         "@types/cors": "^2.8.17",
+        "@types/jsonwebtoken": "^9.0.9",
         "prisma": "^6.4.1"
     }
 }

@@ -1,8 +1,12 @@
-import { RoomServiceClient, CreateOptions } from "livekit-server-sdk";
-import { Response } from "express";
+import {
+  RoomServiceClient,
+  CreateOptions,
+  AccessToken,
+} from "livekit-server-sdk";
+import { json, Response } from "express";
 import { AuthRequest } from "../types";
 
-import { PrismaClient, SessionStatus } from "@prisma/client";
+import { PrismaClient, Role, SessionStatus } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
@@ -172,4 +176,181 @@ export const getRoomDetails = async (
   }
 };
 
+//generate token
+export const generateToken = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { sessionId } = req.params;
+    const { metadata } = req.body;
 
+    if (!req.user) {
+      res.status(401).json({ message: "unauthirized" });
+      return;
+    }
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+      include: {
+        participants: {
+          where: { sessionId: req.user.id },
+        },
+      },
+    });
+
+    if (!session) {
+      res.status(404).json({ message: "session not found" });
+      return;
+    }
+
+    if (!session.livekitRoom) {
+      if (session.teacherId === req.user.id) {
+        try {
+          const roomName = `session=${sessionId}`;
+          await roomService.createRoom({
+            name: roomName,
+            emptyTimeout: 10 * 60,
+            maxParticipants: 100,
+            metadata: JSON.stringify({
+              sessionId,
+              teacherId: session.teacherId,
+              title: session.title,
+            }),
+          });
+
+          await prisma.session.update({
+            where: { id: sessionId },
+            data: {
+              livekitRoom: roomName,
+              status: SessionStatus.LIVE,
+              startTime: new Date(),
+            },
+          });
+
+          //update our local copy of session
+          session.livekitRoom = roomName;
+        } catch (err) {
+          console.error("Error auto-creating room:", err);
+          res.status(500).json({ message: "Failed to create room" });
+          return;
+        }
+      } else {
+        res
+          .status(404)
+          .json({ message: "This session does not have an active room yet" });
+        return;
+      }
+    }
+
+    const roomName = session.livekitRoom;
+
+    const isTeacher = session.teacherId === req.user.id;
+    const isParticipant = session.participants.length > 0;
+
+    if (req.user.role === Role.STUDENT && !isParticipant && !isTeacher) {
+      try {
+        await prisma.sessionParticipant.create({
+          data: {
+            studentId: req.user.id,
+            sessionId: sessionId,
+          },
+        });
+      } catch (err) {
+        console.error("Error adding particiapnt", err);
+      }
+    }
+
+    //Determine users role in this room
+    const isPublisher = isTeacher;
+
+    //create identity with userInfo
+    const identity = {
+      userId: req.user.id,
+      name: req.user.name,
+      role: req.user.role,
+      isTeacher,
+    };
+
+    const token = new AccessToken(
+      process.env.LIVEKIT_API_KEY || "",
+      process.env.LIVEKIT_API_SECRET || "",
+      {
+        identity: JSON.stringify(identity),
+        name: req.user.name,
+        metadata: JSON.stringify({
+          ...identity,
+          profilePicture: req.user.profilePicture,
+          ...(metadata || {}),
+        }),
+      }
+    );
+
+    token.addGrant({
+      roomJoin: true,
+      room: roomName,
+      canPublish: isPublisher, // Only teachers can publish by default
+      canSubscribe: true, // Everyone can subscribe
+      canPublishData: true, // Everyone can send data - for chat, etc.
+    });
+
+    const jwt = token.toJwt();
+    res.status(200).json({ token: jwt });
+  } catch (err) {
+    console.error("Error generating token", err);
+    res.status(500).json({ message: "Failed to generate token" });
+  }
+};
+
+export const endRoom = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!req.user) {
+      res.status(401).json({ message: "Unauthorized" });
+      return;
+    }
+
+    const session = await prisma.session.findUnique({
+      where: { id: sessionId },
+    });
+
+    if (!session) {
+      res.status(404).json({ message: "Session not found" });
+      return;
+    }
+
+    if (session.teacherId !== req.user.id) {
+      res
+        .status(403)
+        .json({ message: "only the session teacher can end the session" });
+      return;
+    }
+
+    if (!session.livekitRoom) {
+      res
+        .status(404)
+        .json({ message: "this session does not have an active room" });
+      return;
+    }
+
+    await roomService.deleteRoom(session.livekitRoom);
+
+    await prisma.session.update({
+      where: { id: sessionId },
+      data: {
+        status: SessionStatus.COMPLETED,
+        endTime: new Date(),
+        livekitRoom: null, //clear the room name
+      },
+    });
+
+    res.status(200).json({ message: "Room ended successfully" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "failed to end the session" });
+  }
+};
