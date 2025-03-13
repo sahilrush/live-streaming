@@ -3,12 +3,10 @@ import {
   CreateOptions,
   AccessToken,
 } from "livekit-server-sdk";
-import { json, Response } from "express";
+import { Response } from "express";
 import { AuthRequest } from "../types";
-
-import { PrismaClient, Role, SessionStatus } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "../utils/config";
+import { Role, SessionStatus } from "@prisma/client";
 
 const roomService = new RoomServiceClient(
   process.env.LIVEKIT_URL || "",
