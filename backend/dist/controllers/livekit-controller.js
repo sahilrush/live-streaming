@@ -11,8 +11,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.endRoom = exports.generateToken = exports.getRoomDetails = exports.createRoom = void 0;
 const livekit_server_sdk_1 = require("livekit-server-sdk");
+const config_1 = require("../utils/config");
 const client_1 = require("@prisma/client");
-const prisma = new client_1.PrismaClient();
 const roomService = new livekit_server_sdk_1.RoomServiceClient(process.env.LIVEKIT_URL || "", process.env.LIVEKIT_API_KEY || "", process.env.LIVEKIT_API_SECRET || "");
 const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
@@ -21,7 +21,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             res.status(401).json({ error: "Unauthorized" });
             return;
         }
-        const session = yield prisma.session.findUnique({
+        const session = yield config_1.prisma.session.findUnique({
             where: { id: sessionId },
             include: { teacher: true },
         });
@@ -47,7 +47,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             }),
         };
         const room = yield roomService.createRoom(roomOptions);
-        yield prisma.session.update({
+        yield config_1.prisma.session.update({
             where: { id: sessionId },
             data: {
                 livekitRoom: roomName,
@@ -78,7 +78,7 @@ const getRoomDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
             res.status(401).json({ error: "Unauthorized" });
             return;
         }
-        const session = yield prisma.session.findUnique({
+        const session = yield config_1.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
                 teacher: {
@@ -158,7 +158,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             res.status(401).json({ message: "unauthirized" });
             return;
         }
-        const session = yield prisma.session.findUnique({
+        const session = yield config_1.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
                 participants: {
@@ -184,7 +184,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                             title: session.title,
                         }),
                     });
-                    yield prisma.session.update({
+                    yield config_1.prisma.session.update({
                         where: { id: sessionId },
                         data: {
                             livekitRoom: roomName,
@@ -213,7 +213,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         const isParticipant = session.participants.length > 0;
         if (req.user.role === client_1.Role.STUDENT && !isParticipant && !isTeacher) {
             try {
-                yield prisma.sessionParticipant.create({
+                yield config_1.prisma.sessionParticipant.create({
                     data: {
                         studentId: req.user.id,
                         sessionId: sessionId,
@@ -261,7 +261,7 @@ const endRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             res.status(401).json({ message: "Unauthorized" });
             return;
         }
-        const session = yield prisma.session.findUnique({
+        const session = yield config_1.prisma.session.findUnique({
             where: { id: sessionId },
         });
         if (!session) {
@@ -281,7 +281,7 @@ const endRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             return;
         }
         yield roomService.deleteRoom(session.livekitRoom);
-        yield prisma.session.update({
+        yield config_1.prisma.session.update({
             where: { id: sessionId },
             data: {
                 status: client_1.SessionStatus.COMPLETED,

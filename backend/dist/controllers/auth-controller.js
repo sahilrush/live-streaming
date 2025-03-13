@@ -24,14 +24,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.login = exports.register = void 0;
-const client_1 = require("@prisma/client");
 const bcrypt_1 = __importDefault(require("bcrypt"));
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
-const prisma = new client_1.PrismaClient();
+const config_1 = require("../utils/config");
 const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { name, email, password, role } = req.body;
-        const existingUser = yield prisma.user.findUnique({
+        const existingUser = yield config_1.prisma.user.findUnique({
             where: { email },
         });
         if (existingUser) {
@@ -40,7 +39,7 @@ const register = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         }
         const salt = yield bcrypt_1.default.genSalt(10);
         const hashedPassword = yield bcrypt_1.default.hash(password, salt);
-        const user = yield prisma.user.create({
+        const user = yield config_1.prisma.user.create({
             data: {
                 name,
                 email,
@@ -64,7 +63,7 @@ exports.register = register;
 const login = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { email, password } = req.body;
-        const user = yield prisma.user.findUnique({
+        const user = yield config_1.prisma.user.findUnique({
             where: { email },
         });
         if (!user) {

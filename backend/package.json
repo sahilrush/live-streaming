@@ -13,9 +13,11 @@
         "@livekit/node-sdk-monorepo": "github:livekit/server-sdk-js",
         "@prisma/client": "^6.4.1",
         "@types/bcrypt": "^5.0.2",
+        "@types/express": "^5.0.0",
         "bcrypt": "^5.1.1",
         "cors": "^2.8.5",
         "dotenv": "^16.4.7",
+        "express": "^4.21.2",
         "helmet": "^8.0.0",
         "jsonwebtoken": "^9.0.2",
         "livekit-server-sdk": "^2.10.2"
