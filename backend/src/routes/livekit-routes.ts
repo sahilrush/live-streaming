@@ -9,7 +9,7 @@ import {
 
 export const LivekitRouter = Router();
 
-LivekitRouter.post("/rooms/sessionId", authenticate, createRoom);
-LivekitRouter.get("/rooms/sessionId", authenticate, getRoomDetails);
+LivekitRouter.post("/rooms/:sessionId", authenticate, createRoom);
+LivekitRouter.get("/rooms/:sessionId", authenticate, getRoomDetails);
 LivekitRouter.post("/token/:sessionId", authenticate, generateToken);
 LivekitRouter.post("/rooms/:sessionId/end", authenticate, endRoom);

@@ -13,7 +13,7 @@ export const createSession = async (req: AuthRequest, res: Response) => {
     }
 
     if (req.user.role !== Role.TEACHER) {
-      res.status(403).json({ message: "Only teachers can create sessions" });
+      res.status(403).json({ message: "Only teacher`s can create sessions" });
       return;
     }
 
@@ -31,7 +31,7 @@ export const createSession = async (req: AuthRequest, res: Response) => {
         teacherId: req.user.id,
       },
     });
-    res.send(201).json(session);
+    res.status(201).json(session);
   } catch (error: any) {
     console.error("Error creating session:", error);
     res.status(500).json({ message: "Failed to create session" });

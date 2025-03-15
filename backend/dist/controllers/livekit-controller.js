@@ -61,7 +61,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 name: room.name,
                 emptyTimeout: room.emptyTimeout,
                 maxParticipants: room.maxParticipants,
-                creationTime: room.creationTime,
+                creationTime: room.creationTime.toString(),
             },
         });
     }

@@ -10,6 +10,7 @@
     "license": "ISC",
     "description": "",
     "dependencies": {
+        "@livekit/components-react": "^2.8.1",
         "@livekit/node-sdk-monorepo": "github:livekit/server-sdk-js",
         "@prisma/client": "^6.4.1",
         "@types/bcrypt": "^5.0.2",

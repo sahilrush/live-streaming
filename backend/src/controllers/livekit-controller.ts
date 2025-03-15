@@ -73,7 +73,7 @@ export const createRoom = async (
         name: room.name,
         emptyTimeout: room.emptyTimeout,
         maxParticipants: room.maxParticipants,
-        creationTime: room.creationTime,
+        creationTime: room.creationTime.toString(),
       },
     });
   } catch (err) {
