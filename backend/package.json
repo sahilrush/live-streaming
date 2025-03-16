@@ -24,8 +24,11 @@
         "livekit-server-sdk": "^2.10.2"
     },
     "devDependencies": {
+        "@tsconfig/node18": "^18.2.4",
         "@types/cors": "^2.8.17",
         "@types/jsonwebtoken": "^9.0.9",
-        "prisma": "^6.4.1"
+        "prisma": "^6.4.1",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.8.2"
     }
 }

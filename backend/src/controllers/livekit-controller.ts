@@ -39,7 +39,7 @@ export const createRoom = async (
     if (session.teacherId != req.user.id) {
       res
         .status(403)
-        .json({ message: "only the sesssion teacher can create a room " });
+        .json({ message: "Only the session teacher can create a room" });
       return;
     }
 
@@ -127,7 +127,7 @@ export const getRoomDetails = async (
     if (!session.livekitRoom) {
       res
         .status(404)
-        .json({ message: "This session does not have an active rooms" });
+        .json({ message: "This session does not have an active room" });
       return;
     }
 
@@ -145,9 +145,8 @@ export const getRoomDetails = async (
     );
 
     if (!isTeacher && !isParticipant) {
-      res
-        .status(403)
-        .json({ message: "you do not have the access to this room" });
+      res.status(403).json({ message: "You do not have access to this room" });
+      return;
     }
 
     const participantCount = session.participants.length;
@@ -170,11 +169,11 @@ export const getRoomDetails = async (
     });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "Failed to get  room details" });
+    res.status(500).json({ message: "Failed to get room details" });
   }
 };
 
-//generate token
+// Generate token
 export const generateToken = async (
   req: AuthRequest,
   res: Response
@@ -184,7 +183,7 @@ export const generateToken = async (
     const { metadata } = req.body;
 
     if (!req.user) {
-      res.status(401).json({ message: "unauthirized" });
+      res.status(401).json({ message: "Unauthorized" });
       return;
     }
 
@@ -192,20 +191,20 @@ export const generateToken = async (
       where: { id: sessionId },
       include: {
         participants: {
-          where: { sessionId: req.user.id },
+          where: { studentId: req.user.id }, // Fixed: Changed from sessionId to studentId
         },
       },
     });
 
     if (!session) {
-      res.status(404).json({ message: "session not found" });
+      res.status(404).json({ message: "Session not found" });
       return;
     }
 
     if (!session.livekitRoom) {
       if (session.teacherId === req.user.id) {
         try {
-          const roomName = `session=${sessionId}`;
+          const roomName = `session-${sessionId}`; // Fixed: Changed from session= to session-
           await roomService.createRoom({
             name: roomName,
             emptyTimeout: 10 * 60,
@@ -226,7 +225,7 @@ export const generateToken = async (
             },
           });
 
-          //update our local copy of session
+          // Update our local copy of session
           session.livekitRoom = roomName;
         } catch (err) {
           console.error("Error auto-creating room:", err);
@@ -244,7 +243,7 @@ export const generateToken = async (
     const roomName = session.livekitRoom;
 
     const isTeacher = session.teacherId === req.user.id;
-    const isParticipant = session.participants.length > 0;
+    const isParticipant = session.participants.length > 0; // Fixed: This checks if the user is a participant
 
     if (req.user.role === Role.STUDENT && !isParticipant && !isTeacher) {
       try {
@@ -255,14 +254,14 @@ export const generateToken = async (
           },
         });
       } catch (err) {
-        console.error("Error adding particiapnt", err);
+        console.error("Error adding participant", err);
       }
     }
 
-    //Determine users role in this room
+    // Determine user's role in this room
     const isPublisher = isTeacher;
 
-    //create identity with userInfo
+    // Create identity with userInfo
     const identity = {
       userId: req.user.id,
       name: req.user.name,
@@ -324,14 +323,14 @@ export const endRoom = async (
     if (session.teacherId !== req.user.id) {
       res
         .status(403)
-        .json({ message: "only the session teacher can end the session" });
+        .json({ message: "Only the session teacher can end the session" });
       return;
     }
 
     if (!session.livekitRoom) {
       res
         .status(404)
-        .json({ message: "this session does not have an active room" });
+        .json({ message: "This session does not have an active room" });
       return;
     }
 
@@ -342,13 +341,13 @@ export const endRoom = async (
       data: {
         status: SessionStatus.COMPLETED,
         endTime: new Date(),
-        livekitRoom: null, //clear the room name
+        livekitRoom: null, // Clear the room name
       },
     });
 
     res.status(200).json({ message: "Room ended successfully" });
   } catch (err) {
     console.log(err);
-    res.status(500).json({ message: "failed to end the session" });
+    res.status(500).json({ message: "Failed to end the session" });
   }
 };

@@ -26,7 +26,6 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   register: (userData: RegisterData) => Promise<void>;
   logout: () => void;
-  updateUser: (userData: Partial<User>) => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -44,7 +43,7 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // API base URL with fallback
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL =  "http://localhost:8000";
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -221,57 +220,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const updateUser = async (userData: Partial<User>) => {
-    if (!user || !token) {
-      toast({
-        title: "Error",
-        description: "You must be logged in to update your profile",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const response = await axios.put(
-        `${API_URL}/api/users/${user.id}`,
-        userData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const updatedUser = response.data;
-      setUser({ ...user, ...updatedUser });
-
-      // Update in storage
-      saveAuthToStorage({ ...user, ...updatedUser }, token);
-
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been successfully updated",
-        variant: "default",
-      });
-
-      return;
-    } catch (err: any) {
-      console.error("Profile update error:", err);
-
-      toast({
-        title: "Update failed",
-        description: err.response?.data?.message || "Could not update profile",
-        variant: "destructive",
-      });
-
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const logout = () => {
     setUser(null);
     setToken(null);
@@ -295,7 +243,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         login,
         register,
         logout,
-        updateUser,
         isAuthenticated: !!user && !!token,
       }}
     >

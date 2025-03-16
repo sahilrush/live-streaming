@@ -32,7 +32,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
         if (session.teacherId != req.user.id) {
             res
                 .status(403)
-                .json({ message: "only the sesssion teacher can create a room " });
+                .json({ message: "Only the session teacher can create a room" });
             return;
         }
         const roomName = `session-${sessionId}`;
@@ -109,7 +109,7 @@ const getRoomDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
         if (!session.livekitRoom) {
             res
                 .status(404)
-                .json({ message: "This session does not have an active rooms" });
+                .json({ message: "This session does not have an active room" });
             return;
         }
         const rooms = yield roomService.listRooms();
@@ -120,9 +120,8 @@ const getRoomDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
         const isTeacher = session.teacherId === req.user.id;
         const isParticipant = session.participants.some((p) => { var _a; return p.studentId === ((_a = req.user) === null || _a === void 0 ? void 0 : _a.id); });
         if (!isTeacher && !isParticipant) {
-            res
-                .status(403)
-                .json({ message: "you do not have the access to this room" });
+            res.status(403).json({ message: "You do not have access to this room" });
+            return;
         }
         const participantCount = session.participants.length;
         res.status(200).json({
@@ -145,35 +144,35 @@ const getRoomDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
     }
     catch (err) {
         console.log(err);
-        res.status(500).json({ message: "Failed to get  room details" });
+        res.status(500).json({ message: "Failed to get room details" });
     }
 });
 exports.getRoomDetails = getRoomDetails;
-//generate token
+// Generate token
 const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { sessionId } = req.params;
         const { metadata } = req.body;
         if (!req.user) {
-            res.status(401).json({ message: "unauthirized" });
+            res.status(401).json({ message: "Unauthorized" });
             return;
         }
         const session = yield config_1.prisma.session.findUnique({
             where: { id: sessionId },
             include: {
                 participants: {
-                    where: { sessionId: req.user.id },
+                    where: { studentId: req.user.id }, // Fixed: Changed from sessionId to studentId
                 },
             },
         });
         if (!session) {
-            res.status(404).json({ message: "session not found" });
+            res.status(404).json({ message: "Session not found" });
             return;
         }
         if (!session.livekitRoom) {
             if (session.teacherId === req.user.id) {
                 try {
-                    const roomName = `session=${sessionId}`;
+                    const roomName = `session-${sessionId}`; // Fixed: Changed from session= to session-
                     yield roomService.createRoom({
                         name: roomName,
                         emptyTimeout: 10 * 60,
@@ -192,7 +191,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                             startTime: new Date(),
                         },
                     });
-                    //update our local copy of session
+                    // Update our local copy of session
                     session.livekitRoom = roomName;
                 }
                 catch (err) {
@@ -210,7 +209,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         const roomName = session.livekitRoom;
         const isTeacher = session.teacherId === req.user.id;
-        const isParticipant = session.participants.length > 0;
+        const isParticipant = session.participants.length > 0; // Fixed: This checks if the user is a participant
         if (req.user.role === client_1.Role.STUDENT && !isParticipant && !isTeacher) {
             try {
                 yield config_1.prisma.sessionParticipant.create({
@@ -221,12 +220,12 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
                 });
             }
             catch (err) {
-                console.error("Error adding particiapnt", err);
+                console.error("Error adding participant", err);
             }
         }
-        //Determine users role in this room
+        // Determine user's role in this room
         const isPublisher = isTeacher;
-        //create identity with userInfo
+        // Create identity with userInfo
         const identity = {
             userId: req.user.id,
             name: req.user.name,
@@ -271,13 +270,13 @@ const endRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         if (session.teacherId !== req.user.id) {
             res
                 .status(403)
-                .json({ message: "only the session teacher can end the session" });
+                .json({ message: "Only the session teacher can end the session" });
             return;
         }
         if (!session.livekitRoom) {
             res
                 .status(404)
-                .json({ message: "this session does not have an active room" });
+                .json({ message: "This session does not have an active room" });
             return;
         }
         yield roomService.deleteRoom(session.livekitRoom);
@@ -286,14 +285,14 @@ const endRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
             data: {
                 status: client_1.SessionStatus.COMPLETED,
                 endTime: new Date(),
-                livekitRoom: null, //clear the room name
+                livekitRoom: null, // Clear the room name
             },
         });
         res.status(200).json({ message: "Room ended successfully" });
     }
     catch (err) {
         console.log(err);
-        res.status(500).json({ message: "failed to end the session" });
+        res.status(500).json({ message: "Failed to end the session" });
     }
 });
 exports.endRoom = endRoom;

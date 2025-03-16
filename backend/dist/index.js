@@ -19,5 +19,5 @@ app.use("/api", livekit_routes_1.LivekitRouter);
 app.use("/api", session_routes_1.SessionRoute);
 const PORT = process.env.PORT || 8001;
 app.listen(PORT, () => {
-    console.log(`error the server is running on part ${PORT}`);
+    console.log(` the server is running on part ${PORT}`);
 });
