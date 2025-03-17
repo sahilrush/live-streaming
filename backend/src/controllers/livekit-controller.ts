@@ -298,16 +298,17 @@ export const generateToken = async (
       canPublish: isPublisher, // Only teachers can publish by default
       canSubscribe: true, // Everyone can subscribe
       canPublishData: true, // Everyone can send data - for chat, etc.
-    });
+      });
 
-    const jwt: string = await token.toJwt();
-    console.log("Geneted Jwt token(first 20chars)", (await jwt).substring(0.2));
-
-    if (!jwt || typeof jwt !== "string" || jwt.length < 10) {
-      console.error("Failed to generate valid JWT token:", jwt);
-      res.status(500).json({ message: "Failed to generate valid token" });
-      return;
-    }
+      const jwt: string = await token.toJwt();
+      console.log("Generated Jwt token(first 20chars)", jwt.substring(0, 20));
+      
+      if (!jwt || typeof jwt !== "string" || jwt.length < 10) {
+        console.error("Failed to generate valid JWT token:", jwt);
+        res.status(500).json({ message: "Failed to generate valid token" });
+        return;
+      }
+      
 
     // Return just the token string directly
     res.status(200).json({ token: jwt });
