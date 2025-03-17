@@ -14,6 +14,8 @@ const livekit_server_sdk_1 = require("livekit-server-sdk");
 const config_1 = require("../utils/config");
 const client_1 = require("@prisma/client");
 const roomService = new livekit_server_sdk_1.RoomServiceClient(process.env.LIVEKIT_URL || "", process.env.LIVEKIT_API_KEY || "", process.env.LIVEKIT_API_SECRET || "");
+console.log("API Key:", process.env.LIVEKIT_API_KEY);
+console.log("API Secret:", process.env.LIVEKIT_API_SECRET ? "exists" : "missing");
 const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { sessionId } = req.params;
@@ -36,6 +38,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
             return;
         }
         const roomName = `session-${sessionId}`;
+        console.log("Room name:", roomName);
         const roomOptions = {
             name: roomName,
             emptyTimeout: 10 * 60,
@@ -55,6 +58,7 @@ const createRoom = (req, res) => __awaiter(void 0, void 0, void 0, function* () 
                 startTime: new Date(),
             },
         });
+        console.log("Room name:", roomName);
         res.status(201).json({
             message: "Room created Successfully",
             room: {
@@ -149,6 +153,7 @@ const getRoomDetails = (req, res) => __awaiter(void 0, void 0, void 0, function*
 });
 exports.getRoomDetails = getRoomDetails;
 // Generate token
+// Generate token function - corrected to return a proper token
 const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const { sessionId } = req.params;
@@ -161,7 +166,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             where: { id: sessionId },
             include: {
                 participants: {
-                    where: { studentId: req.user.id }, // Fixed: Changed from sessionId to studentId
+                    where: { studentId: req.user.id },
                 },
             },
         });
@@ -172,7 +177,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         if (!session.livekitRoom) {
             if (session.teacherId === req.user.id) {
                 try {
-                    const roomName = `session-${sessionId}`; // Fixed: Changed from session= to session-
+                    const roomName = `session-${sessionId}`;
                     yield roomService.createRoom({
                         name: roomName,
                         emptyTimeout: 10 * 60,
@@ -209,7 +214,7 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
         }
         const roomName = session.livekitRoom;
         const isTeacher = session.teacherId === req.user.id;
-        const isParticipant = session.participants.length > 0; // Fixed: This checks if the user is a participant
+        const isParticipant = session.participants.length > 0;
         if (req.user.role === client_1.Role.STUDENT && !isParticipant && !isTeacher) {
             try {
                 yield config_1.prisma.sessionParticipant.create({
@@ -244,7 +249,14 @@ const generateToken = (req, res) => __awaiter(void 0, void 0, void 0, function* 
             canSubscribe: true, // Everyone can subscribe
             canPublishData: true, // Everyone can send data - for chat, etc.
         });
-        const jwt = token.toJwt();
+        const jwt = yield token.toJwt();
+        console.log("Geneted Jwt token(first 20chars)", (yield jwt).substring(0.2));
+        if (!jwt || typeof jwt !== "string" || jwt.length < 10) {
+            console.error("Failed to generate valid JWT token:", jwt);
+            res.status(500).json({ message: "Failed to generate valid token" });
+            return;
+        }
+        // Return just the token string directly
         res.status(200).json({ token: jwt });
     }
     catch (err) {

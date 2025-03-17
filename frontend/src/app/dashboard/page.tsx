@@ -51,7 +51,7 @@ export default function DashboardPage() {
       try {
         setLoading(true);
         const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/api/sessions`,
+          `${process.env.NEXT_PUBLIC_API_URL}/api/session`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }

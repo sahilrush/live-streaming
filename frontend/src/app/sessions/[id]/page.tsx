@@ -48,7 +48,7 @@ export default function SessionDetailPage() {
   const { user, token } = useAuth()
   const router = useRouter()
   const params = useParams()
-  const sessionId = params.id.toString()
+  const sessionId = params.id ? params.id.toString() : "";
   
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
@@ -97,11 +97,12 @@ export default function SessionDetailPage() {
     try {
       setActionLoading(true)
       console.log(`Starting session with ID: ${sessionId}`)
-      console.log(`Using API URL: ${API_BASE_URL}/api/livekit/rooms/${sessionId}`)
+      // Updated to match the router path defined in the backend
+      console.log(`Using API URL: ${API_BASE_URL}/api/rooms/${sessionId}`)
       
-      // Create LiveKit room for the session
+      // Create LiveKit room for the session - corrected API path
       await axios.post(
-        `${API_BASE_URL}/api/livekit/rooms/${sessionId}`,
+        `${API_BASE_URL}/api/rooms/${sessionId}`,
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       )

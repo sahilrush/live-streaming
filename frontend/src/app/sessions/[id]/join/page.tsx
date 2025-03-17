@@ -39,7 +39,7 @@ export default function JoinSessionPage() {
   const router = useRouter();
   const params = useParams();
   const sessionId = params.id ? params.id.toString() : "";
-  
+
   const [session, setSession] = useState<Session | null>(null);
   const [livekitToken, setLivekitToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,6 @@ export default function JoinSessionPage() {
       try {
         setLoading(true);
         console.log(`Setting up session with ID: ${sessionId}`);
-        console.log(`Using API URL: ${API_BASE_URL}/api/session/${sessionId}`);
 
         // 1. Get session details
         const sessionResponse = await axios.get(
@@ -74,33 +73,52 @@ export default function JoinSessionPage() {
         ) {
           // If teacher and session not live, create room
           console.log(`Creating room for session: ${sessionId}`);
-          console.log(`Using API URL: ${API_BASE_URL}/api/livekit/rooms/${sessionId}`);
-          
-          await axios.post(
-            `${API_BASE_URL}/api/livekit/rooms/${sessionId}`,
-            {},
-            { headers: { Authorization: `Bearer ${token}` } }
-          );
+
+          // Using the routes without /livekit prefix
+          try {
+            await axios.post(
+              `${API_BASE_URL}/api/rooms/${sessionId}`,
+              {},
+              { headers: { Authorization: `Bearer ${token}` } }
+            );
+            console.log("Room created successfully");
+          } catch (err) {
+            console.error("Error creating room:", err);
+            // Continue anyway as the next step will check if a room exists
+          }
         }
 
         // 2. Get LiveKit token
         console.log(`Getting token for session: ${sessionId}`);
-        console.log(`Using API URL: ${API_BASE_URL}/api/livekit/token/${sessionId}`);
-        
+
+        // Using the routes without /livekit prefix
         const tokenResponse = await axios.post(
-          `${API_BASE_URL}/api/livekit/token/${sessionId}`,
+          `${API_BASE_URL}/api/token/${sessionId}`,
           {},
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        // Make sure we extract the token string properly
-        if (tokenResponse.data && typeof tokenResponse.data.token === 'string') {
-          setLivekitToken(tokenResponse.data.token);
-          console.log("Token received successfully");
+        console.log("Token response type:", typeof tokenResponse.data);
+
+        // Simple token extraction
+        if (tokenResponse.data && tokenResponse.data.token) {
+          const extractedToken = tokenResponse.data.token;
+
+          if (typeof extractedToken === "string" && extractedToken.length > 0) {
+            setLivekitToken(extractedToken);
+            console.log(
+              "Token extracted successfully (first 20 chars):",
+              extractedToken.substring(0, 20) + "..."
+            );
+          } else {
+            console.error("Invalid token format:", tokenResponse.data);
+            setError("Invalid token format received from server");
+            toast.error("Failed to get a valid session token");
+          }
         } else {
-          console.error("Invalid token format:", tokenResponse.data);
-          setError("Invalid token format received from server");
-          toast.error("Failed to get a valid session token");
+          console.error("No token in response:", tokenResponse.data);
+          setError("No token received from server");
+          toast.error("Failed to get a session token");
         }
       } catch (err: any) {
         console.error("Error setting up session:", err);
@@ -163,11 +181,12 @@ export default function JoinSessionPage() {
   }
 
   const isTeacher = user?.id === session.teacher.id;
-  const livekitUrl = process.env.NEXT_PUBLIC_LIVEKIT_URL || "wss://unacedmy-clone-77ihspfa.livekit.cloud";
+  const livekitUrl =
+    process.env.NEXT_PUBLIC_LIVEKIT_URL ||
+    "wss://unacedmy-clone-77ihspfa.livekit.cloud";
 
   console.log("Using LiveKit URL:", livekitUrl);
-  console.log("Token type:", typeof livekitToken);
-  console.log("Token (first 20 chars):", livekitToken.substring(0, 20) + "...");
+  console.log("Using LiveKit token:", livekitToken.substring(0, 20) + "...");
 
   return (
     <div className="absolute inset-0 bg-background flex flex-col">
@@ -201,6 +220,12 @@ export default function JoinSessionPage() {
             video={isTeacher}
             audio={isTeacher}
             onDisconnected={handleDisconnect}
+            onError={(error: any) => {
+              console.error("LiveKit connection error:", error);
+              toast.error("Connection error", {
+                description: error.message,
+              });
+            }}
           >
             <LayoutContextProvider>
               <div className="flex h-full">

@@ -14,6 +14,12 @@ const roomService = new RoomServiceClient(
   process.env.LIVEKIT_API_SECRET || ""
 );
 
+console.log("API Key:", process.env.LIVEKIT_API_KEY);
+console.log(
+  "API Secret:",
+  process.env.LIVEKIT_API_SECRET ? "exists" : "missing"
+);
+
 export const createRoom = async (
   req: AuthRequest,
   res: Response
@@ -44,6 +50,7 @@ export const createRoom = async (
     }
 
     const roomName = `session-${sessionId}`;
+    console.log("Room name:", roomName);
 
     const roomOptions: CreateOptions = {
       name: roomName,
@@ -66,6 +73,7 @@ export const createRoom = async (
         startTime: new Date(),
       },
     });
+    console.log("Room name:", roomName);
 
     res.status(201).json({
       message: "Room created Successfully",
@@ -174,6 +182,7 @@ export const getRoomDetails = async (
 };
 
 // Generate token
+// Generate token function - corrected to return a proper token
 export const generateToken = async (
   req: AuthRequest,
   res: Response
@@ -191,7 +200,7 @@ export const generateToken = async (
       where: { id: sessionId },
       include: {
         participants: {
-          where: { studentId: req.user.id }, // Fixed: Changed from sessionId to studentId
+          where: { studentId: req.user.id },
         },
       },
     });
@@ -204,7 +213,7 @@ export const generateToken = async (
     if (!session.livekitRoom) {
       if (session.teacherId === req.user.id) {
         try {
-          const roomName = `session-${sessionId}`; // Fixed: Changed from session= to session-
+          const roomName = `session-${sessionId}`;
           await roomService.createRoom({
             name: roomName,
             emptyTimeout: 10 * 60,
@@ -243,7 +252,7 @@ export const generateToken = async (
     const roomName = session.livekitRoom;
 
     const isTeacher = session.teacherId === req.user.id;
-    const isParticipant = session.participants.length > 0; // Fixed: This checks if the user is a participant
+    const isParticipant = session.participants.length > 0;
 
     if (req.user.role === Role.STUDENT && !isParticipant && !isTeacher) {
       try {
@@ -291,7 +300,16 @@ export const generateToken = async (
       canPublishData: true, // Everyone can send data - for chat, etc.
     });
 
-    const jwt = token.toJwt();
+    const jwt: string = await token.toJwt();
+    console.log("Geneted Jwt token(first 20chars)", (await jwt).substring(0.2));
+
+    if (!jwt || typeof jwt !== "string" || jwt.length < 10) {
+      console.error("Failed to generate valid JWT token:", jwt);
+      res.status(500).json({ message: "Failed to generate valid token" });
+      return;
+    }
+
+    // Return just the token string directly
     res.status(200).json({ token: jwt });
   } catch (err) {
     console.error("Error generating token", err);

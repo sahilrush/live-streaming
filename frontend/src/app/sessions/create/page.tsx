@@ -114,7 +114,7 @@ export default function CreateSessionPage() {
       if (values.isInstantStart) {
         try {
           await axios.post(
-            `http://localhost:8000/api/livekit/rooms/${sessionId}`,
+            `http://localhost:8000/api/rooms/${sessionId}`,
             {},
             {
               headers: { Authorization: `Bearer ${token}` },
