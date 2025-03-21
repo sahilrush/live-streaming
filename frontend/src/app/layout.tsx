@@ -5,6 +5,7 @@ import { AuthProvider } from "@/providers/AuthProvider";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { Toaster } from "@/components/ui/sonner";
 import Navbar from "@/components/Navbar";
+import TrackContextProvider from "@/providers/TrackProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -27,13 +28,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <AuthProvider>
-            <div className="flex flex-col min-h-screen">
-              <Navbar />
-              <main className="flex-1 container mx-auto p-4">{children}</main>
-            </div>
-            <Toaster />
-          </AuthProvider>
+          <TrackContextProvider>
+            {" "}
+            {/* Use the Client Component */}
+            <AuthProvider>
+              <div className="flex flex-col min-h-screen">
+                <Navbar />
+                <main className="flex-1 container mx-auto p-4">{children}</main>
+              </div>
+              <Toaster />
+            </AuthProvider>
+          </TrackContextProvider>
         </ThemeProvider>
       </body>
     </html>

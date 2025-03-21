@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 
 interface User {
+  avatar: any;
   id: string;
   name: string;
   email: string;
@@ -43,7 +44,7 @@ interface AuthProviderProps {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // API base URL with fallback
-const API_URL =  "http://localhost:8000";
+const API_URL = "http://localhost:8000";
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
@@ -224,7 +225,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     setToken(null);
     localStorage.removeItem("auth");
-
     router.push("/");
 
     toast({
