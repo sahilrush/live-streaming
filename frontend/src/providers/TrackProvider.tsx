@@ -8,7 +8,7 @@ export default function TrackContextProvider({
   children: React.ReactNode;
 }) {
   return (
-    <TrackRefContext.Provider value={{}}>
+    <TrackRefContext.Provider value={undefined}>
       {children}
     </TrackRefContext.Provider>
   );

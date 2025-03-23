@@ -14,14 +14,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ModeToggle } from "./ModeToggle";
-import { User, LogOut, Menu, X, Home, LayoutDashboard, Video, Plus } from "lucide-react";
+import {
+  User,
+  LogOut,
+  Menu,
+  X,
+  Home,
+  LayoutDashboard,
+  Video,
+  Plus,
+} from "lucide-react";
 
 export default function Navbar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const isActive = (path:any) => {
+  const isActive = (path: any) => {
     return pathname === path;
   };
 
@@ -41,12 +50,10 @@ export default function Navbar() {
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center space-x-1">
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-              isActive("/") 
-                ? "bg-primary/10 text-primary" 
-                : "hover:bg-muted"
+              isActive("/") ? "bg-primary/10 text-primary" : "hover:bg-muted"
             }`}
           >
             <span className="flex items-center gap-1.5">
@@ -54,14 +61,14 @@ export default function Navbar() {
               Home
             </span>
           </Link>
-          
+
           {user && (
             <>
               <Link
                 href="/dashboard"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/dashboard") 
-                    ? "bg-primary/10 text-primary" 
+                  isActive("/dashboard")
+                    ? "bg-primary/10 text-primary"
                     : "hover:bg-muted"
                 }`}
               >
@@ -70,12 +77,12 @@ export default function Navbar() {
                   Dashboard
                 </span>
               </Link>
-              
+
               <Link
                 href="/sessions"
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                  isActive("/sessions") 
-                    ? "bg-primary/10 text-primary" 
+                  isActive("/sessions")
+                    ? "bg-primary/10 text-primary"
                     : "hover:bg-muted"
                 }`}
               >
@@ -84,13 +91,13 @@ export default function Navbar() {
                   Sessions
                 </span>
               </Link>
-              
+
               {user && user.role === "TEACHER" && (
                 <Link
                   href="/sessions/create"
                   className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                    isActive("/sessions/create") 
-                      ? "bg-primary/10 text-primary" 
+                    isActive("/sessions/create")
+                      ? "bg-primary/10 text-primary"
                       : "hover:bg-muted"
                   }`}
                 >
@@ -108,23 +115,31 @@ export default function Navbar() {
           <ModeToggle />
 
           {/* Mobile menu button */}
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="md:hidden" 
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
             onClick={toggleMobileMenu}
           >
-            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            {mobileMenuOpen ? (
+              <X className="h-5 w-5" />
+            ) : (
+              <Menu className="h-5 w-5" />
+            )}
           </Button>
 
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="rounded-full relative h-8 w-8 flex items-center justify-center ring-1 ring-border overflow-hidden">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="rounded-full relative h-8 w-8 flex items-center justify-center ring-1 ring-border overflow-hidden"
+                >
                   {user.avatar ? (
-                    <img 
-                      src={user.avatar} 
-                      alt={user.name} 
+                    <img
+                      src={user.avatar}
+                      alt={user.name}
                       className="h-full w-full object-cover"
                     />
                   ) : (
@@ -153,7 +168,7 @@ export default function Navbar() {
                   <Link href="/settings">Settings</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem 
+                <DropdownMenuItem
                   onClick={logout}
                   className="text-red-500 focus:text-red-500 cursor-pointer"
                 >
@@ -179,12 +194,10 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div className="md:hidden border-t">
           <div className="container mx-auto px-4 py-3 space-y-1">
-            <Link 
-              href="/" 
+            <Link
+              href="/"
               className={`block px-3 py-2 rounded-md text-base font-medium ${
-                isActive("/") 
-                  ? "bg-primary/10 text-primary" 
-                  : "hover:bg-muted"
+                isActive("/") ? "bg-primary/10 text-primary" : "hover:bg-muted"
               }`}
               onClick={() => setMobileMenuOpen(false)}
             >
@@ -193,14 +206,14 @@ export default function Navbar() {
                 Home
               </span>
             </Link>
-            
+
             {user ? (
               <>
                 <Link
                   href="/dashboard"
                   className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/dashboard") 
-                      ? "bg-primary/10 text-primary" 
+                    isActive("/dashboard")
+                      ? "bg-primary/10 text-primary"
                       : "hover:bg-muted"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
@@ -210,12 +223,12 @@ export default function Navbar() {
                     Dashboard
                   </span>
                 </Link>
-                
+
                 <Link
                   href="/sessions"
                   className={`block px-3 py-2 rounded-md text-base font-medium ${
-                    isActive("/sessions") 
-                      ? "bg-primary/10 text-primary" 
+                    isActive("/sessions")
+                      ? "bg-primary/10 text-primary"
                       : "hover:bg-muted"
                   }`}
                   onClick={() => setMobileMenuOpen(false)}
@@ -225,13 +238,13 @@ export default function Navbar() {
                     Sessions
                   </span>
                 </Link>
-                
+
                 {user && user.role === "TEACHER" && (
                   <Link
                     href="/sessions/create"
                     className={`block px-3 py-2 rounded-md text-base font-medium ${
-                      isActive("/sessions/create") 
-                        ? "bg-primary/10 text-primary" 
+                      isActive("/sessions/create")
+                        ? "bg-primary/10 text-primary"
                         : "hover:bg-muted"
                     }`}
                     onClick={() => setMobileMenuOpen(false)}
@@ -246,15 +259,12 @@ export default function Navbar() {
             ) : (
               <div className="flex flex-col space-y-2 mt-3 px-3">
                 <Button variant="outline" asChild>
-                  <Link 
-                    href="/login"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
+                  <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
                     Login
                   </Link>
                 </Button>
                 <Button asChild>
-                  <Link 
+                  <Link
                     href="/register"
                     onClick={() => setMobileMenuOpen(false)}
                   >
